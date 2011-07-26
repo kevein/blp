@@ -28,7 +28,7 @@ int main(int argc, char *argv[]){
 
 	printf("File type:	");
 
-           switch (statbuff.st_mode & S_IFMT) {
+	switch (statbuff.st_mode & S_IFMT) {
            case S_IFBLK:  printf("block device\n");            break;
            case S_IFCHR:  printf("character device\n");        break;
            case S_IFDIR:  printf("directory\n");               break;
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]){
            case S_IFREG:  printf("regular file\n");            break;
            case S_IFSOCK: printf("socket\n");                  break;
            default:       printf("unknown?\n");                break;
-        }
+	}
 	printf("Mode:	%lo (octal)\n", (unsigned long)modes);
 	printf("Link count:	%d\n", (long)statbuff.st_nlink);
 	printf("Ownership:	UID=%ld, GID=%ld\n", (long)statbuff.st_uid, (long)statbuff.st_gid);
@@ -47,7 +47,8 @@ int main(int argc, char *argv[]){
 	printf("Last status change:       %s", ctime(&statbuff.st_ctime));
         printf("Last file access:         %s", ctime(&statbuff.st_atime));
         printf("Last file modification:   %s", ctime(&statbuff.st_mtime));
-	
+
+	close(filedes);	
 	exit(0);	
 		
 }
