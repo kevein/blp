@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <time.h>
 int main(int argc, char *argv[]){
 	
 	char *filename;
@@ -42,7 +42,8 @@ int main(int argc, char *argv[]){
 	printf("Link count:	%d\n", (long)statbuff.st_nlink);
 	printf("Ownership:	UID=%ld, GID=%ld\n", (long)statbuff.st_uid, (long)statbuff.st_gid);
 	printf("Preferred I/O block size:	%ld bytes\n", (long)statbuff.st_blksize);
-	printf("File size:	%ld\n", (long)statbuff.st_size);
+	printf("File size:	%ld\n", (long) statbuff.st_size);
+	printf("inode number:	%ld\n", (long) statbuff.st_ino);
 	printf("Blocks allocated:	%ld\n", (long)statbuff.st_blocks);
 	printf("Last status change:       %s", ctime(&statbuff.st_ctime));
         printf("Last file access:         %s", ctime(&statbuff.st_atime));
