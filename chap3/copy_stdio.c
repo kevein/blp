@@ -15,12 +15,19 @@ int main(){
 //------------------------------------------------------------
 	char s[BUFFSIZE];
 	FILE *in, *out;
+	int errnum;
 	
 	in = fopen("file.in", "r");
 	out = fopen("file.out", "a");
 	
 	while((fgets(s, BUFFSIZE, in)) != NULL)
 		fprintf(out, "%s", s);
+	
+	errnum = ferror(in);
+	if(errnum)
+		printf("Something wrong in stream file.in, %d\n", errnum);
+	if(feof(in))
+		printf("We're at end of file.in\n");
 
 	exit(0);
 }
