@@ -5,15 +5,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-int printdir(const char *, int);
-int isdir = 0;
+void printdir(const char *, int);
+void printdt(struct dirent *dt);
+int isdir(struct dirent *dt);
 
 int main(int argc, char *argv[]){
 	int depth = 0;
 
 	if(argc != 3){
 		printf("Usage: scandir [directory name] [depth]\n");	
-		return -1;
+		exit(-1);
 	}
 	
 	depth = atoi(argv[2]);	
@@ -24,95 +25,86 @@ int main(int argc, char *argv[]){
 	
 }
 
-int printdir(const char *dirname, int depth){
+void printdir(const char *dirname, int depth){
 
         DIR *directory;
 	struct dirent *dt;
 	int i;
-        extern int isdir;
+//	printf("In printdir: directory name %s\n", dirname);
 
         if((directory = opendir(dirname)) == NULL){
-                fprintf(stderr,"open directory : %s\n", dirname);
-                return 1;
+                fprintf(stderr,"Open directory failed: %s\n", dirname);
+                exit(1);
         }
-	for(i = 0; i <= depth; i++){
-		while(dt = readdir(directory)){
-			if(isdir && (depth -i > 0)){
-				printdt(dt);
-				printdir(dt->d_name, depth-1);
-			}
-			printdt(dt);
-		}
+	chdir(dirname);
+	while(dt = readdir(directory)){
+		if (strcmp(".", dt->d_name) == 0 || strcmp("..", dt->d_name) == 0)
+			return;
+		printdt(dt);
 	}
 
 
 }
 
-int printdt(struct dirent *dt){
-	int i;
+int isdir(struct dirent *dt){
+        struct stat statbuff;
+        lstat(dt->d_name, &statbuff);
+        return S_ISDIR(statbuff.st_mode);
+}
+
+void printdt(struct dirent *dt){
+
 	struct stat statbuff;
-	extern int isdir;
+	mode_t modes;
 	lstat(dt->d_name, &statbuff);
+	
+	modes = statbuff.st_mode;
+	printf("%lo\t", (unsigned long) modes);
+        switch(modes & S_IFMT) {
+           case S_IFBLK:  printf("b");        break;
+           case S_IFCHR:  printf("c");        break;
+           case S_IFDIR:  printf("d");        break;
+           case S_IFIFO:  printf("f");        break;
+           case S_IFLNK:  printf("l");        break;
+           case S_IFREG:  printf("-");        break;
+           case S_IFSOCK: printf("s");        break;
+           default:       printf("?");        break;
+        }
 
-	if(S_ISDIR(statbuff.st_mode)){
-		printf("d");	
-		isdir = 1;
+
+//----------------------------------------------------------
+	switch(modes & S_IRWXU) {
+	  case S_IRWXU:  printf("rwx");       break;
+	  case S_IRUSR:  printf("r--");       break;
+	  case S_IWUSR:  printf("-w-");       break;
+	  case S_IXUSR:  printf("--x");       break;
+	  default:	 printf("---");	      break;
+
 	}
-	if(S_ISREG(statbuff.st_mode))
-		printf("-");
-	if(S_ISCHR(statbuff.st_mode))
-		printf("c");
-	if(S_ISBLK(statbuff.st_mode))
-		printf("b");
-	if(S_ISFIFO(statbuff.st_mode))
-		printf("f");
-	if(S_ISLNK(statbuff.st_mode))
-		printf("l");
-	if(S_ISSOCK(statbuff.st_mode))
-		printf("s");
-//----------------------------------------------------------
-	if(S_IRUSR & statbuff.st_mode)
-		printf("r");
-	else
-		printf("-");
-	if(S_IWUSR & statbuff.st_mode)
-		printf("w");
-	else
-		printf("-");
-	if(S_IXUSR & statbuff.st_mode)
-		printf("x");
-	else
-		printf("-");
 
 //----------------------------------------------------------
-	if(S_IRGRP & statbuff.st_mode)
-		printf("r");
-	else
-		printf("-");
-	if(S_IWGRP & statbuff.st_mode)
-		printf("w");
-	else
-		printf("-");
-	if(S_IXGRP & statbuff.st_mode)
-		printf("x");
-	else
-		printf("-");
+	switch(modes & S_IRWXG) {
+	  case S_IRWXG:  printf("rwx");       break;
+	  case S_IRGRP:  printf("r--");       break;
+	  case S_IWGRP:  printf("-w-");       break;
+	  case S_IXGRP:  printf("--x");       break;
+	  default:	 printf("---");	      break;
+
+	}
 
 //----------------------------------------------------------
-	if(S_IROTH & statbuff.st_mode)
-		printf("r");
-	else
-		printf("-");
-	if(S_IWOTH & statbuff.st_mode)
-		printf("w");
-	else
-		printf("-");
-	if(S_IXOTH & statbuff.st_mode)
-		printf("x");
-	else
-		printf("-");
+	switch(modes & S_IRWXO) {
+	  case S_IRWXO:  printf("rwx");       break;
+	  case S_IROTH:  printf("r--");       break;
+	  case S_IWOTH:  printf("-w-");       break;
+	  case S_IXOTH:  printf("--x");       break;
+	  default:	 printf("---");	      break;
+
+	}
 
 //----------------------------------------------------------
 	printf("\t");
-	printf("%10s\n", dt->d_name);
+	printf("%ld\t", (long) statbuff.st_size);
+	printf("%ld %ld\t", (long)statbuff.st_uid, (long)statbuff.st_gid);
+	printf("%-10s\n", dt->d_name);
 }
