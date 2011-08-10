@@ -5,20 +5,23 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-void printdir(DIR *, int);
-void printdt(const char *dname);
+int condepth;
+
+void printdir(char *dirname, int depth);
+void printdt(const char *dname, int depth);
 int isdir(const char *dname);
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
 	
-	DIR *directory;
 	char *dirname;
         struct stat statbuff;
 
         dirname = argv[1];
+	condepth = 0;
 
         if(!isdir(dirname)){
-                printdt(dirname);
+                printdt(dirname, 0);
                 exit(0);
         }
 
@@ -28,52 +31,59 @@ int main(int argc, char *argv[]){
 	}
 
         int depth;
-        depth = atoi(argv[2]);
+        condepth = depth = atoi(argv[2]);
 
-        if((directory = opendir(dirname)) == NULL){
-                fprintf(stderr,"Open directory failed: %s\n", dirname);
-                exit(1);
-        }
-
-	printdir(directory, depth);
+	printdir(dirname, depth);
 
 	exit(0);
 	
 }
 
-void printdir(DIR *directory, int depth){
+void printdir(char *dirname, int depth)
+{
 
 	if(depth < 0)
 		return;
+	DIR *directory;
+        if((directory = opendir(dirname)) == NULL){
+                fprintf(stderr,"Open directory failed: %s\n", dirname);
+                exit(1);
+        }
+	chdir(dirname);
 
 	struct dirent *dt;
 
 	while(dt = readdir(directory)){
 		if (strcmp(".", dt->d_name) == 0 || strcmp("..", dt->d_name) == 0)
 			continue;
+		printdt(dt->d_name, depth);
 		if(isdir(dt->d_name)){
-			printdir(opendir(dt->d_name), depth-1);
+			printdir(dt->d_name, depth-1);
 		}
-		printdt(dt->d_name);
 	}
-
+	chdir("..");
+	closedir(directory);
 
 }
 
-int isdir(const char *dname){
+int isdir(const char *dname)
+{
         struct stat statbuff;
         lstat(dname, &statbuff);
         return S_ISDIR(statbuff.st_mode);
 }
 
-void printdt(const char *dname){
+void printdt(const char *dname, int depth)
+{
 
 	struct stat statbuff;
 	unsigned long modes;
 	lstat(dname, &statbuff);
 	modes = statbuff.st_mode;
-	printf("Mode: %lo\n", modes);
-	printf("%lo,%lo,%lo,%lo\n", (modes & S_IFMT), (modes & S_IRWXU), (modes & S_IRWXG), (modes & S_IRWXO));
+
+	int i = condepth - depth;
+        for(; i>0; i--)
+                printf("\t");
 
         switch(modes & S_IFMT) {
            case S_IFBLK:  printf("b");        break;
@@ -88,34 +98,46 @@ void printdt(const char *dname){
 
 
 //----------------------------------------------------------
-	switch(modes & S_IRWXU) {
-	  case S_IRWXU:  printf("rwx");       break;
-	  case S_IRUSR:  printf("r--");       break;
-	  case S_IWUSR:  printf("-w-");       break;
-	  case S_IXUSR:  printf("--x");       break;
-	  default:	 printf("---");	      break;
-
-	}
-
-//----------------------------------------------------------
-	switch(modes & S_IRWXG) {
-	  case S_IRWXG:  printf("rwx");       break;
-	  case S_IRGRP:  printf("r--");       break;
-	  case S_IWGRP:  printf("-w-");       break;
-	  case S_IXGRP:  printf("--x");       break;
-	  default:	 printf("---");	      break;
-
-	}
+	if(modes & S_IRUSR)
+		printf("r");
+	else	
+		printf("-");
+	if(modes & S_IWUSR)
+		printf("w");
+	else	
+		printf("-");
+	if(modes & S_IXUSR)
+		printf("x");
+	else	
+		printf("-");
 
 //----------------------------------------------------------
-	switch(modes & S_IRWXO) {
-	  case S_IRWXO:  printf("rwx");       break;
-	  case S_IROTH:  printf("r--");       break;
-	  case S_IWOTH:  printf("-w-");       break;
-	  case S_IXOTH:  printf("--x");       break;
-	  default:	 printf("---");	      break;
+	if(modes & S_IRGRP)
+		printf("r");
+	else	
+		printf("-");
+	if(modes & S_IWGRP)
+		printf("w");
+	else	
+		printf("-");
+	if(modes & S_IXGRP)
+		printf("x");
+	else	
+		printf("-");
 
-	}
+//----------------------------------------------------------
+	if(modes & S_IROTH)
+		printf("r");
+	else	
+		printf("-");
+	if(modes & S_IWOTH)
+		printf("w");
+	else	
+		printf("-");
+	if(modes & S_IXOTH)
+		printf("x");
+	else	
+		printf("-");
 
 //----------------------------------------------------------
 	printf("\t");
