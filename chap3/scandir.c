@@ -5,61 +5,76 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-void printdir(const char *, int);
-void printdt(struct dirent *dt);
-int isdir(struct dirent *dt);
+void printdir(DIR *, int);
+void printdt(const char *dname);
+int isdir(const char *dname);
 
 int main(int argc, char *argv[]){
-	int depth = 0;
+	
+	DIR *directory;
+	char *dirname;
+        struct stat statbuff;
+
+        dirname = argv[1];
+
+        if(!isdir(dirname)){
+                printdt(dirname);
+                exit(0);
+        }
 
 	if(argc != 3){
 		printf("Usage: scandir [directory name] [depth]\n");	
 		exit(-1);
 	}
-	
-	depth = atoi(argv[2]);	
 
-	printdir(argv[1], depth);
-
-	exit(0);
-	
-}
-
-void printdir(const char *dirname, int depth){
-
-        DIR *directory;
-	struct dirent *dt;
-	int i;
-//	printf("In printdir: directory name %s\n", dirname);
+        int depth;
+        depth = atoi(argv[2]);
 
         if((directory = opendir(dirname)) == NULL){
                 fprintf(stderr,"Open directory failed: %s\n", dirname);
                 exit(1);
         }
-	chdir(dirname);
+
+	printdir(directory, depth);
+
+	exit(0);
+	
+}
+
+void printdir(DIR *directory, int depth){
+
+	if(depth < 0)
+		return;
+
+	struct dirent *dt;
+
 	while(dt = readdir(directory)){
 		if (strcmp(".", dt->d_name) == 0 || strcmp("..", dt->d_name) == 0)
-			return;
-		printdt(dt);
+			continue;
+		if(isdir(dt->d_name)){
+			printdir(opendir(dt->d_name), depth-1);
+		}
+		printdt(dt->d_name);
 	}
 
 
 }
 
-int isdir(struct dirent *dt){
+int isdir(const char *dname){
         struct stat statbuff;
-        lstat(dt->d_name, &statbuff);
+        lstat(dname, &statbuff);
         return S_ISDIR(statbuff.st_mode);
 }
 
-void printdt(struct dirent *dt){
+void printdt(const char *dname){
 
 	struct stat statbuff;
-	mode_t modes;
-	lstat(dt->d_name, &statbuff);
-	
+	unsigned long modes;
+	lstat(dname, &statbuff);
 	modes = statbuff.st_mode;
-	printf("%lo\t", (unsigned long) modes);
+	printf("Mode: %lo\n", modes);
+	printf("%lo,%lo,%lo,%lo\n", (modes & S_IFMT), (modes & S_IRWXU), (modes & S_IRWXG), (modes & S_IRWXO));
+
         switch(modes & S_IFMT) {
            case S_IFBLK:  printf("b");        break;
            case S_IFCHR:  printf("c");        break;
@@ -106,5 +121,5 @@ void printdt(struct dirent *dt){
 	printf("\t");
 	printf("%ld\t", (long) statbuff.st_size);
 	printf("%ld %ld\t", (long)statbuff.st_uid, (long)statbuff.st_gid);
-	printf("%-10s\n", dt->d_name);
+	printf("%-10s\n", dname);
 }
