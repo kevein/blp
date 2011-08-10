@@ -16,20 +16,27 @@ int main(int argc, char *argv[])
 	
 	char *dirname;
         struct stat statbuff;
-
-        dirname = argv[1];
-	condepth = 0;
-
-        if(!isdir(dirname)){
-                printdt(dirname, 0);
-                exit(0);
+	
+        if((argc != 3) && (argc != 2)){
+                printf("Usage: scandir [directory name] [depth],  Or scandir [file name]\n");
+                exit(-1);
         }
 
-	if(argc != 3){
-		printf("Usage: scandir [directory name] [depth]\n");	
-		exit(-1);
-	}
+        dirname = argv[1];
 
+	if(argc == 2){
+       		if(!isdir(dirname)){
+        	        printdt(dirname, 0);
+                	exit(0);
+        	}
+		if(fopen(dirname,"r") == NULL){
+			fprintf(stderr,"Open directory failed: %s, the reason is: ", dirname);
+			perror("");
+		}
+		else
+			printf("%s is a directory, please input the [depth]\n", dirname);
+		exit(-2);
+	}
         int depth;
         condepth = depth = atoi(argv[2]);
 
@@ -46,8 +53,9 @@ void printdir(char *dirname, int depth)
 		return;
 	DIR *directory;
         if((directory = opendir(dirname)) == NULL){
-                fprintf(stderr,"Open directory failed: %s\n", dirname);
-                exit(1);
+                fprintf(stderr,"Open directory failed: %s, the reason is: ", dirname);
+		perror("");
+		return;
         }
 	chdir(dirname);
 
@@ -69,7 +77,10 @@ void printdir(char *dirname, int depth)
 int isdir(const char *dname)
 {
         struct stat statbuff;
-        lstat(dname, &statbuff);
+        if(lstat(dname, &statbuff)){
+		printf("Fail to stat %s\n", dname);
+		return 2;
+	}
         return S_ISDIR(statbuff.st_mode);
 }
 
