@@ -4,7 +4,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <time.h>
+#include <errno.h>
 
 int condepth;
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 	
         if((argc != 3) && (argc != 2)){
                 printf("Usage: scandir [directory name] [depth],  Or scandir [file name]\n");
-                exit(-1);
+                exit(EINVAL);
         }
 
         dirname = argv[1];
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 		}
 		else
 			printf("%s is a directory, please input the [depth]\n", dirname);
-		exit(-2);
+		exit(EINVAL);
 	}
         int depth;
         condepth = depth = atoi(argv[2]);
