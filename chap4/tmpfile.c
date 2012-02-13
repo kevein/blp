@@ -11,10 +11,12 @@ int main()
   char tmpname[LENTH_NAME];
   char *filename, *filename2;
   FILE *tmpfp;
-  int fd;
+  int fd, fd2;
   ssize_t rdlink;
-  char tmpstr[50], buff[15];
-  filename2 = malloc(sizeof(char)*30);
+  char tmpstr[50];
+  filename2 = malloc(sizeof(char)*50);
+  
+  char template[] = "/tmp/Kevein_XXXXXX";
   
   filename = tmpnam(tmpname);
 
@@ -28,14 +30,20 @@ int main()
   
   fd = fileno(tmpfp);
   
-  strcpy(tmpstr, "/proc/");
-  sprintf(buff, "%d/fd/%d", getpid(),fd);
-  strcat(tmpstr,buff);
+  sprintf(tmpstr, "/proc/%d/fd/%d", getpid(),fd);
   
-  rdlink= readlink(tmpstr, filename2, 30);
+  rdlink= readlink(tmpstr, filename2, 50);
   printf("Created by tmpfile(): %s\n", filename2);
+
+  fd2 = mkstemp(template);
+  bzero(tmpstr, 50);
+  bzero(filename2, 50);
+  sprintf(tmpstr, "/proc/%d/fd/%d", getpid(),fd2);
+  printf("%s\n", tmpstr);
+  rdlink= readlink(tmpstr, filename2, 50);
+  printf("Created by mkstemp(): %s\n", filename2);
   
-  sleep(60);
+  /* sleep(60);  */
 
   exit(0);
 }
