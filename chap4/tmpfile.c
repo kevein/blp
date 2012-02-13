@@ -39,7 +39,6 @@ int main()
   bzero(tmpstr, 50);
   bzero(filename2, 50);
   sprintf(tmpstr, "/proc/%d/fd/%d", getpid(),fd2);
-  printf("%s\n", tmpstr);
   rdlink= readlink(tmpstr, filename2, 50);
   printf("Created by mkstemp(): %s\n", filename2);
   
