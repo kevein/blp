@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     strcpy(string, var);
     strcat(string, "=");
     strcat(string, value);
-    printf("Calling putenv with: %s]n", string);
+    printf("Calling putenv with: %s\n", string);
     if(putenv(string) != 0){
       fprintf(stderr, "putenv failed\n");
       free(string);
